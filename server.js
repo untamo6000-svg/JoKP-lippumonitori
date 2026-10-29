@@ -1,3 +1,14 @@
+const express = require('express');
+const axios = require('axios');
+const cheerio = require('cheerio');
+
+const app = express();
+const PORT = process.env.PORT || 8080;
+const JOKP_LIPPU_URL = 'https://www.lippu.fi/artist/joensuun-kiekko-pojat/';
+
+let matchesCache = [];
+let lastFetchTime = 'Ei vielä haettu';
+
 async function fetchJoKPMatches() {
   try {
     const response = await axios.get(JOKP_LIPPU_URL, {
@@ -47,7 +58,6 @@ async function fetchJoKPMatches() {
   } catch (error) {
     console.error('Virhe haettaessa otteluita:', error.message);
     
-    // Jos pyyntö epäonnistuu (esim. 403), näytetään siltä varalta suora toimiva linkki
     matchesCache = [{
       id: 'jokp-direct',
       title: 'Joensuun Kiekko-Pojat - Otteluliput',
@@ -59,3 +69,53 @@ async function fetchJoKPMatches() {
     return matchesCache;
   }
 }
+
+app.get('/', async (req, res) => {
+  const matches = await fetchJoKPMatches();
+  
+  let html = `
+    <!DOCTYPE html>
+    <html lang="fi">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Joensuun Kiekko-Pojat - Lippumonitori</title>
+      <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { color: #d9534f; text-align: center; }
+        .match-card { border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 6px; background: #fafafa; }
+        .btn { display: inline-block; background: #d9534f; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 10px; }
+        .btn:hover { background: #c9302c; }
+        .info { text-align: center; font-size: 0.9em; color: #666; margin-bottom: 20px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h1>Joensuun Kiekko-Pojat Lippumonitori</h1>
+        <div class="info">Viimeisin päivitys: ${lastFetchTime}</div>
+  `;
+
+  matches.forEach(match => {
+    html += `
+      <div class="match-card">
+        <h3>${match.title}</h3>
+        <p><strong>Ajankohta:</strong> ${match.date}</p>
+        <p><strong>Tila:</strong> ${match.status}</p>
+        <a href="${match.url}" target="_blank" class="btn">Osta liput / Siirry Lippu.fi</a>
+      </div>
+    `;
+  });
+
+  html += `
+      </div>
+    </body>
+    </html>
+  `;
+
+  res.send(html);
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Lippumonitori käynnissä portissa ${PORT}`);
+});
