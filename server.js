@@ -14,7 +14,9 @@ async function fetchJoKPMatches() {
   try {
     const response = await axios.get(JOKP_LIPPU_URL, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'fi-FI,fi;q=0.9,en-US;q=0.8,en;q=0.7'
       }
     });
 
@@ -124,6 +126,6 @@ app.get('/', (req, res) => {
   `);
 });
 
-app.listen(PORT,'0.0.0.0', () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Lippumonitori käynnissä portissa ${PORT}`);
 });
